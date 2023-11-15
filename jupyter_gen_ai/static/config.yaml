@@ -1,0 +1,13 @@
+Type: IPython Notebook Extension
+Name: Jupyter GenAI
+Description: TBD
+Link: readme.md
+Icon: icon.png
+Main: main.js
+Compatibility: 5.x
+
+Parameters:
+- name: jupyter_gen_ai.bind_generate_to_cmd_enter
+  input_type: checkbox
+  description: Bind cmd+enter to generate content in a new cell
+  default: true
