@@ -14,45 +14,110 @@ define([
   var JL_DEFAULT_PARAMS = {
   };
 
+  var last_prompt = '';
+
   // Jupyter notebook integration.
 
   var JLGenerate = function() {
     var cells = Jupyter.notebook.get_cells();
+    var indices = Jupyter.notebook.get_selected_cells_indices();
 
-    var index = Jupyter.notebook.get_selected_index();
+    var cell_type = cells[indices[indices.length - 1]].cell_type;
+    var inline;
+
+    if (indices.length == 1 && cells[indices[0]].code_mirror.getValue().trim() == '') {
+      context = '';
+      inline = true;
+    } else {
+      context = '';
+      for (var i in indices) {
+        var index = indices[i];
+        var cell = cells[index];
+        cell.unrender();
+        context += cells[index].code_mirror.getValue().trim() + '\n\n';
+      }
+      context = context.trim();
+      inline = false;
+    }
+    console.log(inline, context)
+
+    var p = prompt('What to do?', last_prompt);
+    last_prompt = p;
+    var content = p + '\n\n' + context;
+
+
+    /*var index = Jupyter.notebook.get_selected_index();
     var this_cell = cells[index];
     this_cell.unrender();
     var this_cm = this_cell.code_mirror;
-    var text = this_cm.getValue();
+    var text = this_cm.getValue();*/
+
+    /*
+    var last_cells_to_insert = 0;
+    var match = /(?:last|previous) ([0-9a-z]+)? ?cells?/g.exec(text);
+    if (match) {
+      var prev_text = '';
+      var last_cells_to_insert = parseInt(match[1]) || 1;
+
+      for (var i = last_cells_to_insert; i >= 1; --i) {
+        var previous_cell = Jupyter.notebook.get_cell(index - i);
+        previous_cell.unrender();
+        prev_text += '\nCell ' + (last_cells_to_insert - i + 1) + ':\n' + previous_cell.code_mirror.getValue() + '\n\n';
+      }
+      text += '\n' + prev_text;
+    }
+    */
 
     var request = {
       "messages": [
         {
-          "content": "You are a helpful assistant, " +
-                     "if you asked for a code, you give just a code, " +
-                     "without explanations.",
-          "role": "system"
+          "role": "system",
+          "content": "You are a helpful assistant. Be short."
         },
         {
-          "content": text,
-          "role": "user"
+          "role": "user",
+          "content": [{"type": "text", "text": content}]
         }
       ],
+      "model": "x/llama3.2-vision:latest",
       "temperature": 0.7,
       "repeat_penalty": 1.1,
       "stream": true,
-      "n": -1
+      "n": -1,
+      "max_tokens": 1000
     };
 
-    var next_cell = Jupyter.notebook.insert_cell_below(
-      this_cell.cell_type, Jupyter.notebook.get_selected_index());
-    next_cell.unrender();
-    var next_cm = next_cell.code_mirror;
-    next_cm.setValue('');
+    if (context.indexOf('](attachment:') !== -1) {
+      var content = [];
+      var this_cell = cells[indices[0]];
+      var name_imdata = Object.entries(this_cell.attachments)[0];
+      var imtype_content = Object.entries(name_imdata[1])[0];
+      request['messages'][1]['content'].push({
+        "type": "image_url",
+        "image_url": {
+            "url": 'data:' + imtype_content[0] + ';base64,' + imtype_content[1]
+        },
+      });
+      console.log(request);
+    }
+
+
+
+    var cm;
+    if (inline) {
+      var cell = cells[Jupyter.notebook.get_selected_index()];
+      var cm = cell.code_mirror;
+    } else {
+      var cell = Jupyter.notebook.insert_cell_below(
+        cell_type, Jupyter.notebook.get_selected_index());
+      cell.unrender();
+      var cm = cell.code_mirror;
+      cm.setValue('');
+    }
 
     var last_response_len = false;
     $.ajax({
-      url: "http://localhost:8000/v1/chat/completions",
+      url: "http://localhost:11434/v1/chat/completions",
       contentType: 'application/json',
       data: JSON.stringify(request),
       dataType: 'json',
@@ -69,19 +134,40 @@ define([
             last_response_len = response.length;
           }
 
-          if (this_response.startsWith('data: ')) {
-            var out = this_response.slice(6);
+          var lines = this_response.split('\n');
+          for (var i in lines) {
+            var line = lines[i];
+            if (!line.startsWith('data: ')) continue;
+
+            var out = line.slice(6);
             if(out.trim() == '[DONE]') return;
+
             var d = JSON.parse(out);
-            if (d.choices[0].delta.content) {
-              var text = d.choices[0].delta.content;
-              next_cm.setValue(next_cm.getValue() + text);
+            var token = d.choices[0].delta.content;
+            if (!token) continue;
+
+            if (cm.getValue() == '') {
+              cm.setValue(token.trimStart());
+            } else {
+              cm.replaceRange(token, {line: Infinity});
             }
           }
         }
     }
     });
   }
+
+  var getAbsoluteUrl = (function() {
+    var a;
+
+    return function(url) {
+      if(!a) a = document.createElement('a');
+      a.href = url;
+
+      return a.href;
+    };
+  })();
+
 
   function load_ipython_extension() {
 		return Jupyter.notebook.config.loaded
