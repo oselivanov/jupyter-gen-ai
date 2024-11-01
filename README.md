@@ -1,18 +1,19 @@
-# Jupyter Notebook 5 GenAI integration plugin
+# Older Jupyter Notebook 5 local GenAI integration plugin
 
-This thing uses local web server comes with llama-cpp-python to answer question and generate code right inside of the Jupyter Notebook, making new cells.
+Uses local Ollama, supports Jupyter markdown cell image attachments passing to multimodal LLMs.
 
 # Installation
 
-pip3 install jupyter-gen-ai
-jupyter nbextension install --python --user jupyter_gen_ai
-jupyter nbextension enable jupyter_gen_ai/static/main --user
+    pip3 install jupyter-gen-ai
+    jupyter nbextension install --python --user jupyter_gen_ai
+    jupyter nbextension enable jupyter_gen_ai/static/main --user
 
-# Examples
+# Run local model
 
-python3 -m llama_cpp.server --n_gpu_layers 0 --n_threads 4 --model models/mistral-7b-instruct-v0.1.Q4_K_M.gguf
+    ollama run x/llama3.2-vision:latest
 
-Use cmd+enter takes current cell content to GenAI, creates a new cell of the same type below and live feeds the response to this new cell.
+By default cmd+enter takes current cell content to GenAI, creates a new cell of the same type below
+and live feeds the response to this new cell.
 
 # TODO
 

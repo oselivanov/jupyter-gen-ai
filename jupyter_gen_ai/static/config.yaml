@@ -11,3 +11,7 @@ Parameters:
   input_type: checkbox
   description: Bind cmd+enter to generate content in a new cell
   default: true
+
+- name: jupyter_gen_ai.api_server_url
+  description: Ollama server url
+  default: 'http://localhost:11434/v1/chat/completions'

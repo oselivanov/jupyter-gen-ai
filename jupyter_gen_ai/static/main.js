@@ -9,6 +9,7 @@ define([
 ) {
   var JL_DEFAULT_SETTINGS = {
     bind_generate_to_cmd_enter: true,
+    api_server_url: '',
   };
 
   var last_prompt = '';
@@ -67,11 +68,11 @@ define([
     return prompt;
   }
 
-  function prepareRequest(content) { 
+  function prepareRequest(content) {
     return {
       "messages": [
         {
-          "role": "system", 
+          "role": "system",
           "content": "You are a helpful assistant. Be short."
         },
         {
@@ -117,7 +118,7 @@ define([
   function makeStreamingRequest(request, cm) {
     var last_response_len = false;
     $.ajax({
-      url: "http://localhost:11434/v1/chat/completions",
+      url: JLSettings.api_server_url,
       contentType: 'application/json',
       data: JSON.stringify(request),
       dataType: 'json',
