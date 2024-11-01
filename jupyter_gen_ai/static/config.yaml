@@ -15,3 +15,7 @@ Parameters:
 - name: jupyter_gen_ai.api_server_url
   description: Ollama server url
   default: 'http://localhost:11434/v1/chat/completions'
+
+- name: jupyter_gen_ai.llm_model
+  description: Ollama model to use
+  default: 'x/llama3.2-vision:latest'

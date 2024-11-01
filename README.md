@@ -17,8 +17,4 @@ and live feeds the response to this new cell.
 
 # TODO
 
-1. Remove hard-coded url
-2. Unhardcode model and parameters
-2. Pass notebook contents in a context
-3. From a list of urls, fetch them and add it to the context
-4. Port it to something newer
+1. Add option to pass whole notebook contents as a context

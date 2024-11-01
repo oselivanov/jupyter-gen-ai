@@ -9,8 +9,10 @@ define([
 ) {
   var JL_DEFAULT_SETTINGS = {
     bind_generate_to_cmd_enter: true,
-    api_server_url: '',
+    api_server_url: 'http://localhost:11434/v1/chat/completions',
+    llm_model: 'x/llama3.2-vision:latest',
   };
+  var JLSettings = {};
 
   var last_prompt = '';
 
@@ -80,7 +82,7 @@ define([
           "content": [{"type": "text", "text": content}]
         }
       ],
-      "model": "x/llama3.2-vision:latest",
+      "model": JLSettings.llm_model,
       "temperature": 0.7,
       "repeat_penalty": 1.1,
       "stream": true,
@@ -98,7 +100,7 @@ define([
         "url": 'data:' + imtype_content[0] + ';base64,' + imtype_content[1]
       },
     });
-    console.log(request);
+    //console.log(request);
   }
 
   function setupCodeMirror(cells, inline, cellType, selectedIndex) {
@@ -175,8 +177,6 @@ define([
   function load_ipython_extension() {
 		return Jupyter.notebook.config.loaded
 			.then(function () {
-        var JLSettings = {};
-
 				$.extend(
           true, JLSettings,
           JL_DEFAULT_SETTINGS,
@@ -191,7 +191,7 @@ define([
 
         if (JLSettings.bind_generate_to_cmd_enter) {
           Jupyter.keyboard_manager.command_shortcuts.add_shortcuts({
-            'cmd-enter': 'jupyter-notebook:-generate-answer-to-next-cell',
+            'cmd-enter': 'jupyter-notebook:generate-answer-to-next-cell',
           });
         }
       });
